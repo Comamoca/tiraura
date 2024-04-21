@@ -1,7 +1,7 @@
 # sokol-rust
 
 sokolというCでグラフィックス処理を行なえるライブラリ。
-マルチプラットフォームらしい。
+マルチプラットフォームらしい。なのでWebでも動かすことができる。
 
 ## どこで知ったのか
 
@@ -118,6 +118,27 @@ https://x.com/Comamoca_/status/1780556210393284878
 
 あんまり解説する要素はないけれど、一応やってみる。
 
+その前にsokolの全体像を解説していく。
+
+### sokolの全体像
+
+sokol自体は一つの大きなライブラリという訳ではなく、ヘッダーに機能が分散されている。
+なのでプログラムを書く際は複数のヘッダーを読み込むことになる。
+
+また、それらのヘッダー郡はコアライブラリとユーティリティの二つのグループに分かれている。
+
+
+#### コアライブラリ
+
+- sokol_gfx.h: クロスプラットフォームな3Dラッパー
+- sokol_app.h: アプリケーションラッパー(entry, window, 3D-context, inputなどを備えている)
+- sokol_time.h: 時刻管理
+- sokol_audio.h: 最小限のバッファオーディオストリーミング
+- sokol_fetch.h: HTTPまたはローカルからの非同期データストリーミング
+- sokol_args.h: webまたはローカルで使えるコマンドライン引数パーサ
+- sokol_log.h: ロギング
+
+
 ### struct State
 
 プログラム全体で持ち回る状態を定義している。
@@ -133,4 +154,25 @@ static mut STATE: State = State {
 };
 ```
 
-### 
+### extern "C" fn init
+
+初期化処理。C言語側で実行されるため、言語リンケージ(extern "C")を付けている。
+まず始めに状態を初期化し、
+
+```rust
+extern "C" fn init() {
+    let state = unsafe { &mut STATE };
+
+    sg::setup(&sg::Desc {
+        environment: sglue::environment(),
+        ..Default::default()
+    });
+
+    state.pass_action.colors[0] = sg::ColorAttachmentAction {
+        load_action: sg::LoadAction::Clear,
+        // 色指定
+        clear_value: sg::Color { r: 0.0, g: 0.0, b: 1.0, a: 1.0 },
+        ..Default::default()
+    };
+}
+```
